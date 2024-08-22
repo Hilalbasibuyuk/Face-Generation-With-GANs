@@ -146,20 +146,11 @@ from torch.utils.data import DataLoader
 stats = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
 transformations = transforms.Compose([transforms.Resize((64)),transforms.CenterCrop(64), transforms.ToTensor(), transforms.Normalize(*stats),])
 dataset = ImageFolder(DATA_DIR, transform = transformations)
-dataloader = DataLoader(dataset, batch_size=256, shuffle=True, num_workers=2, pin_memory=True)
-
-#%%
-def unnormalize(tensor, mean, std):
-    mean = torch.tensor(mean).view(1, -1, 1, 1)
-    std = torch.tensor(std).view(1, -1, 1, 1)
-    tensor = tensor * std + mean
-    return tensor
+dataloader = DataLoader(dataset, batch_size=256, shuffle=True, num_workers=0, pin_memory=True)
 
 def show_images(dataloader, nmax=64):
     images, _ = next(iter(dataloader))
     images = images.detach().cpu()  # CPU'ya taşı ve detach et
-    # Unnormalize işlemi
-    images = unnormalize(images, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     images = torch.clamp(images, 0, 1)  # [0, 1] aralığına getir
     fig, ax = plt.subplots(figsize=(8, 8))
     ax.set_xticks([]); ax.set_yticks([])
@@ -167,6 +158,8 @@ def show_images(dataloader, nmax=64):
     plt.show()
 
 show_images(dataloader)
+
+
 
 # %%
 def denorm(img_tensors):
@@ -273,7 +266,7 @@ generator = nn.Sequential(
     nn.BatchNorm2d(64),
     nn.ReLU(True),
     # out: 64 x 32 x 32
-     nn.ConvTranspose2d(64, 3, kernel_size=4, stride=2, padding=1, bias=False),
+    nn.ConvTranspose2d(64, 3, kernel_size=4, stride=2, padding=1, bias=False),
     nn.Tanh()
     # out: 3 x 64 x 64
 )
@@ -371,7 +364,7 @@ def fit(epochs, lr, start_idx=1):
             # Train discriminator
             loss_d, real_score, fake_score = train_discriminator(real_images, opt_d)
             loss_g = train_generator(opt_g)
-    # Record losses & scores
+        # Record losses & scores
         losses_g.append(loss_g)
         losses_d.append(loss_d)
         real_scores.append(real_score)
